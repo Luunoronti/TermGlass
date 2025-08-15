@@ -26,7 +26,7 @@ public sealed class Viewport : IViewport
 
         if (Zoom >= 1.0)
         {
-            return ((int)Math.Round(wx), (int)Math.Round(wy));
+            return ((int)Math.Round(wx, MidpointRounding.AwayFromZero), (int)Math.Round(wy, MidpointRounding.AwayFromZero));
         }
         else
         {
@@ -64,8 +64,8 @@ public sealed class Viewport : IViewport
 
     public (int sx, int sy) WorldToScreen(double wx, double wy)
     {
-        var sx = (int)Math.Round(4 + (wx - OriginX) * Zoom);
-        var sy = (int)Math.Round(1 + (wy - OriginY) * Zoom);
+        var sx = (int)Math.Round(4 + (wx - OriginX) * Zoom, MidpointRounding.AwayFromZero);
+        var sy = (int)Math.Round(1 + (wy - OriginY) * Zoom, MidpointRounding.AwayFromZero);
         return (sx, sy);
     }
 

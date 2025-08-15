@@ -23,4 +23,5 @@ TooltipProvider? tooltip = (ix, iy) =>
 Visualizer.Run(cfg, frame =>
 {
     frame.DrawWorld(world);
+    frame.DrawRectWorld(10, 10, 3, 3, 'X', Rgb.Red, Rgb.Black);
 }, tooltip);

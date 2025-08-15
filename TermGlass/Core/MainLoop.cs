@@ -284,7 +284,7 @@ internal sealed class MainLoop
             var mul = _cfg.PanSpeed / _vp.Zoom;   // always proportional to zoom
             if (dx != 0 || dy != 0)
             {
-                _vp.Offset(Math.Floor(-dx * mul), Math.Floor(-dy * mul));
+                _vp.Offset(-dx * mul, -dy * mul);
                 _input.Dirty = true;
             }
         }
@@ -353,7 +353,7 @@ internal sealed class MainLoop
             var (wx, _) = _vp.ScreenToWorld(sx, 1);
             if (sx % 10 == 0)
             {
-                var label = ((int)Math.Round(wx)).ToString();
+                var label = ((int)Math.Round(wx, MidpointRounding.AwayFromZero)).ToString();
                 Renderer.PutTextKeepBg(_buf, sx, 0, label, Rgb.White);
             }
         }
@@ -364,7 +364,7 @@ internal sealed class MainLoop
             var (_, wy) = _vp.ScreenToWorld(lw, sy);
             if (sy % 2 == 0)
             {
-                var s = ((int)Math.Round(wy)).ToString();
+                var s = ((int)Math.Round(wy, MidpointRounding.AwayFromZero)).ToString();
                 s = s.Length <= 3 ? s.PadLeft(3) : s[^3..];
                 Renderer.PutTextKeepBg(_buf, 0, sy, s, Rgb.White);
             }
@@ -395,12 +395,14 @@ internal sealed class MainLoop
         for (var x = 0; x < W; x++)
             _buf.Set(x, H - 1, new Cell(' ', Rgb.Black, Rgb.Gray));
 
-        // world cell under cursor (with correction for zoom<1)
-        var (ix, iy) = _vp.WorldCellUnderScreen(_input.MouseX, _input.MouseY);
+        // world cell under cursor (report only when cursor is inside map area)
+        var insideMap = _input.MouseX >= _cfg.LeftRulerWidth && _input.MouseX < W && _input.MouseY >= 1 && _input.MouseY < H - 1;
+        var (ix, iy) = insideMap ? _vp.WorldCellUnderScreen(_input.MouseX, _input.MouseY) : (int.MinValue, int.MinValue);
         var autoInfo = _cfg.AutoPlay ? $"{_cfg.AutoStepPerSecond:F1}/s | FPS {_fps:F1}" : "off";
 
         // <<< new status line
-        var info = $" {_cfg.ColorMode} | {_cfg.Layers} | Zoom {_vp.Zoom:F2} | Auto {autoInfo} | Cell {ix}, {iy}";
+        var cellInfo = insideMap ? $"Cell {ix}, {iy}" : "Cell -";
+        var info = $" {_cfg.ColorMode} | {_cfg.Layers} | Zoom {_vp.Zoom:F2} | Auto {autoInfo} | {cellInfo}";
         var status = $"F1 Help | {info}".PadRight(W);
 
         Renderer.PutText(_buf, 0, H - 1, status[..Math.Min(W, status.Length)], Rgb.Black, Rgb.Gray);
@@ -428,6 +430,10 @@ internal sealed class MainLoop
         }
 
 
+        // Only show tooltip when mouse is inside the drawable map area
+        var W = _t.Width; var H = _t.Height;
+        var insideMap = _input.MouseX >= _cfg.LeftRulerWidth && _input.MouseX < W && _input.MouseY >= 1 && _input.MouseY < H - 1;
+        if (!insideMap) return;
         var (ix, iy) = _vp.WorldCellUnderScreen(_input.MouseX, _input.MouseY);
         var text = _tooltip(ix, iy);
         if (string.IsNullOrEmpty(text)) return;

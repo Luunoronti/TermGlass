@@ -24,8 +24,8 @@ public static class Renderer
     {
         if (worldPerPixel <= 1.0)
         {
-            var x = (int)Math.Round(wx);
-            var y = (int)Math.Round(wy);
+            var x = (int)Math.Round(wx, MidpointRounding.AwayFromZero);
+            var y = (int)Math.Round(wy, MidpointRounding.AwayFromZero);
             var c = world.GetCell(x, y);
             return c ?? new Cell(' ', Rgb.White, Rgb.Black);
         }
@@ -77,7 +77,7 @@ public static class Renderer
     {
         if (!enabled) return;
         var (sx0, sy0) = vp.WorldToScreen(x, y);
-        var (sx1, sy1) = vp.WorldToScreen(x + w, y + h);
+        var (sx1, sy1) = vp.WorldToScreen(x + w-1, y + h-1);
         int x0 = Math.Min(sx0, sx1), x1 = Math.Max(sx0, sx1);
         int y0 = Math.Min(sy0, sy1), y1 = Math.Max(sy0, sy1);
         for (var sy = y0; sy <= y1; sy++)
@@ -89,7 +89,7 @@ public static class Renderer
     {
         if (!enabled) return;
         var (scx, scy) = vp.WorldToScreen(cx, cy);
-        var rr = (int)Math.Round(r * vp.Zoom);
+        var rr = (int)Math.Round(r * vp.Zoom, MidpointRounding.AwayFromZero);
         for (var sy = scy - rr; sy <= scy + rr; sy++)
             for (var sx = scx - rr; sx <= scx + rr; sx++)
             {
