@@ -1,0 +1,138 @@
+TermGlass - Cursor Project Rules (Overview)
+
+Purpose: keep the assistant on the rails when editing this repo. These rules summarize architecture, constraints, style, key bindings, CI/release flow, and common gotchas. Prefer small, surgical diffs with clear commit messages.
+
+PROJECT
+
+Name: TermGlass
+Type: Terminal visualization toolkit for C#
+TFMs: net8.0, net9.0
+Output: single DLL plus symbols (.snupkg)
+Goals: TrueColor and ANSI16 rendering, layers (map/rulers/status/overlays), tooltip, movable windows, zoom/pan, mouse and keyboard input. Suited for Advent of Code and algorithm sims.
+
+ARCHITECTURE (single DLL)
+
+Folder plan:
+TermGlass/
+Core/       (Frame, Viewport, MainLoop, UiLayers, VizConfig)
+Rendering/
+Buffer/   (Cell, CellBuffer)
+Color/    (Rgb)
+Emit/     (Renderer - drawing helpers)
+Input/      (InputReader, InputState)
+UI/Windows  (Window)
+DemoWorld/  (DemoWorld - sample world)
+
+Notes:
+
+Keep implementation details local; expose only what is needed from Frame and Visualizer. For now, follow current code; do not introduce new types unless explicitly requested.
+
+Color modes: TrueColor (24-bit, alpha blending) vs Console16 (opaque; no alpha).
+
+Layers bitmask (UiLayers): Map, Rulers, StatusBar, Overlays (combinable). Draw order: map -> rulers -> windows -> tooltip -> status bar.
+
+KEY BINDINGS (runtime)
+
+Quit: Ctrl+Q
+Step: Space
+Zoom: + or - (or mouse wheel). 0 = reset zoom around screen center.
+Pan: arrows or WASD; mouse drag pans scene (unless dragging a window).
+Color mode: C toggles TrueColor <-> 16-color.
+Tooltip: T toggles visibility. Tooltip is hidden when the cursor is over a window.
+Layer presets: F5 (all), F6 (map only), F7 (UI only), F8 (toggle overlays).
+Autoplay presets: 1 off, 2 approx 5 steps/sec, 3 approx 30 steps/sec. [ and ] reserved for future scrub.
+
+RENDERING RULES AND PERFORMANCE
+
+Back buffer: CellBuffer stores Cell(char Ch, Rgb Fg, Rgb Bg).
+
+Alpha rules: if CellBuffer.AlphaBlendEnabled == false (Console16), treat all blends as opaque paint; do not attempt semi-transparency.
+
+ANSI emission: in Terminal.Draw send color escape codes only when a color actually changes.
+
+Rulers and status: in TrueColor, use blended backgrounds. In 16-color mode, explicitly overwrite BG and keep FG where appropriate.
+
+Bounds: prefer TrySet for safe writes; guard indices using unsigned casts or explicit checks.
+
+Sampling: Renderer.DrawWorld should sample world via Viewport.ScreenToWorld; for zoom < 1 use small downsampling (e.g., 2x2), select mode char across the sample, average colors.
+
+INPUT AND LOOP
+
+InputReader runs on a background thread, parsing xterm mouse SGR (1006) and function keys. It coalesces motion and wheel events.
+
+MainLoop pulls key events (limited per frame), applies mouse deltas, updates viewport (Pan, ZoomAround, ResetZoomAroundScreenPoint), and renders only when Input.Dirty is true or during resize.
+
+Tooltip provider is optional; skip tooltip when the cursor is over any window.
+
+STYLE AND CONVENTIONS
+
+Language: English in code comments.
+
+Namespaces: file-scoped; mirror folder structure (e.g., TermGlass.Core, TermGlass.Rendering.Color).
+
+Access modifiers: prefer internal for engine parts; keep public surface minimal (leave current visibility as-is unless a change is explicitly requested).
+
+Classes: mark sealed where inheritance is not intended.
+
+Math: use Clamp, early exits, and avoid allocations in hot paths.
+
+Formatting: consistent braces; no trailing whitespace.
+
+CI AND RELEASE (NuGet)
+
+Build-only CI: .github/workflows/ci.yml builds TermGlass/TermGlass.csproj on pushes and PRs to main.
+
+Publish: .github/workflows/publish.yml packs and pushes only TermGlass/TermGlass.csproj when a tag like vX.Y.Z is pushed.
+
+Versioning: keep the  in TermGlass.csproj in sync with the tag.
+
+Readme and License: stored at repo root and included via csproj  and PackageReadmeFile.
+
+HOW TO ASK FOR CHANGES (Cursor)
+
+Always add concrete files to context (example: @TermGlass/Core/MainLoop.cs @TermGlass/Rendering/Emit/Renderer.cs).
+
+Be explicit: describe observable behavior and where to place the change. Prefer small diffs.
+
+No new types unless requested: refactors that introduce interfaces, classes, or files must be explicitly approved.
+
+When touching hot paths: request benchmarks or add a micro-timer in Diagnostics before merging.
+
+COMMON TASKS
+
+Translate comments: keep code intact; update comment text only.
+
+Fix nullable warnings: initialize non-null fields (e.g., = default!;) or make setters private; avoid suppressions unless justified.
+
+Clamp windows to screen on resize; close button [X] is in top-right of a window.
+
+Status line should show: ColorMode | Layers | Zoom | Auto(play) | FPS (if auto) | Cell ix,iy.
+
+BACKLOG (optional, tackle one at a time)
+
+Dirty spans and style runs per line to reduce escape codes.
+
+Recorder/Replayer: record steps plus draw ops; scrub with [ and ].
+
+Alternate renderer seam (offscreen image or GIF export).
+
+Headless mode for CI demos.
+
+SAFETY RAILS
+
+Do not remove features tied to keybindings without updating the F1 help content.
+
+Do not assume alpha in 16-color mode; treat as opaque.
+
+After color mode toggle, call Terminal.Clear() to avoid stale attributes.
+
+CHEAT SHEET
+
+Build locally: dotnet build -c Release TermGlass/TermGlass.csproj
+
+Pack locally: dotnet pack -c Release TermGlass/TermGlass.csproj -o ./artifacts
+
+Tag release: git tag v0.1.0 && git push origin v0.1.0
+
+NuGet API key: repo secret NUGET_API_KEY
+
