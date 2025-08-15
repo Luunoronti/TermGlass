@@ -1,12 +1,6 @@
 using System.Diagnostics;
-using TermGlass.Input;
-using TermGlass.Modes;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
-using TermGlass.Rendering.Emit;
-using TermGlass.UI.Windows;
 
-namespace TermGlass.Core;
+namespace TermGlass;
 
 // =================== Core loop & rendering ===================
 
@@ -48,8 +42,10 @@ internal sealed class MainLoop
         _t.EnableMouse(true);
         _t.Clear();
 
-        _vp.CenterOn(0, 0);
+        //_vp.CenterOn(0, 0);
+        // Start with world origin (0,0) aligned to the map's top-left (accounting for rulers)
         _vp.SetZoom(1.0);
+        _vp.Offset(-_vp.OffsetX, -_vp.OffsetY);
 
         _inputReader = new InputReader(_input);
         _inputReader.Start();
@@ -288,7 +284,7 @@ internal sealed class MainLoop
             var mul = _cfg.PanSpeed / _vp.Zoom;   // always proportional to zoom
             if (dx != 0 || dy != 0)
             {
-                _vp.Offset(-dx * mul, -dy * mul);
+                _vp.Offset(Math.Floor(-dx * mul), Math.Floor(-dy * mul));
                 _input.Dirty = true;
             }
         }
@@ -307,6 +303,9 @@ internal sealed class MainLoop
         var (wWorld, hWorld) = _vp.VisibleWorldSize();
         var stepX = wWorld * _cfg.PanKeyStepFrac;
         var stepY = hWorld * _cfg.PanKeyStepFrac;
+        // Ensure keyboard pan always moves by at least 1 world cell and in integer steps
+        //stepX = Math.Max(1.0, Math.Floor(stepX));
+        //stepY = Math.Max(1.0, Math.Floor(stepY));
         _vp.Offset(dx * stepX, dy * stepY);
         _input.Dirty = true;
     }

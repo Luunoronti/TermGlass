@@ -1,6 +1,5 @@
-using TermGlass.Rendering.Buffer;
 
-namespace TermGlass.Core;
+namespace TermGlass;
 
 // World: the user provides data for sampling (character + color)
 public interface IWorldSource

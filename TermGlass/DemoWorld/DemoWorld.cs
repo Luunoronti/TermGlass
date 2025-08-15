@@ -1,6 +1,4 @@
-using TermGlass.Core;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
+using TermGlass;
 
 namespace TermGlass.DemoWorld;
 

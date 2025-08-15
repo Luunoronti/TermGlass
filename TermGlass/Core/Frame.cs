@@ -1,9 +1,4 @@
-using TermGlass.Input;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
-using TermGlass.Rendering.Emit;
-
-namespace TermGlass.Core;
+namespace TermGlass;
 
 // Drawing in world vs. screen coordinates
 public sealed class Frame

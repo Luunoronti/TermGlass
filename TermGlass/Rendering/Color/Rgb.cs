@@ -1,6 +1,6 @@
 using System;
 
-namespace TermGlass.Rendering.Color;
+namespace TermGlass;
 
 // Simple TrueColor colors helper
 public readonly record struct Rgb(byte R, byte G, byte B)

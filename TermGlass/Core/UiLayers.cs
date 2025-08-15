@@ -1,4 +1,4 @@
-namespace TermGlass.Core;
+namespace TermGlass;
 
 // =================== Public API ===================
 

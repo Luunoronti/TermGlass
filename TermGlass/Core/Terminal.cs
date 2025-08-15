@@ -1,12 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using TermGlass.Input;
-using TermGlass.Modes;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
 
-namespace TermGlass.Core;
+namespace TermGlass;
 
 public sealed class Terminal : IDisposable
 {

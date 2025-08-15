@@ -1,8 +1,5 @@
-using TermGlass.Core;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
 
-namespace TermGlass.Rendering.Emit;
+namespace TermGlass;
 
 // =================== Rendering helpers ===================
 

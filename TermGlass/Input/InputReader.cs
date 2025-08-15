@@ -1,7 +1,7 @@
 // InputReader.cs
 using System.Text;
 
-namespace TermGlass.Input;
+namespace TermGlass;
 
 internal sealed class InputReader
 {

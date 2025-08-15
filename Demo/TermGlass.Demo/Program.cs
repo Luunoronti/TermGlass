@@ -1,6 +1,4 @@
-﻿using TermGlass.Core;
-using TermGlass.Rendering.Color;
-using TermGlass.Modes;
+﻿using TermGlass;
 
 // Simple demo: render a gradient DemoWorld with interactive zoom/pan
 Console.OutputEncoding = System.Text.Encoding.UTF8;

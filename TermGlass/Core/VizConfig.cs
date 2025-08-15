@@ -1,7 +1,5 @@
-using TermGlass.Modes;
-using TermGlass.Rendering.Color;
 
-namespace TermGlass.Core;
+namespace TermGlass;
 
 public record VizConfig
 {
@@ -12,7 +10,7 @@ public record VizConfig
     public bool AutoPlay { get; set; } = false;
     public double AutoStepPerSecond { get; set; } = 5.0;
 
-    public double PanSpeed { get; set; } = 2.0;        // mouse panning speed multiplier (world/px)
+    public double PanSpeed { get; set; } = 1.0;        // mouse panning speed multiplier (world/px)
     public double PanKeyStepFrac { get; set; } = 0.10; // fraction of world view width per 1 keyboard step
 
 

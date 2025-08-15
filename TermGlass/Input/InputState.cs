@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace TermGlass.Input;
+namespace TermGlass;
 
 // =================== Input: stan + parser myszy (SGR 1006) ===================
 

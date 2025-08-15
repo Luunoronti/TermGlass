@@ -1,4 +1,4 @@
-namespace TermGlass.Modes;
+namespace TermGlass;
 
 public enum ColorMode
 {

@@ -1,8 +1,6 @@
-﻿using TermGlass.Input;
-using TermGlass.Rendering.Buffer;
-using TermGlass.Rendering.Color;
+﻿using TermGlass;
 
-namespace TermGlass.UI.Windows;
+namespace TermGlass;
 
 public sealed class Window
 {

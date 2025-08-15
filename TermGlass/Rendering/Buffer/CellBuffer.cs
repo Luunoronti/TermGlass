@@ -1,6 +1,5 @@
-﻿using TermGlass.Rendering.Color;
-
-namespace TermGlass.Rendering.Buffer;
+﻿
+namespace TermGlass;
 
 // =================== Terminal & buffers ===================
 

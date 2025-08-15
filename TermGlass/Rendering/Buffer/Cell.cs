@@ -1,5 +1,4 @@
-using TermGlass.Rendering.Color;
 
-namespace TermGlass.Rendering.Buffer;
+namespace TermGlass;
 
 public readonly record struct Cell(char Ch, Rgb Fg, Rgb Bg);
