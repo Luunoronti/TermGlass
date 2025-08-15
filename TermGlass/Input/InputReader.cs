@@ -3,7 +3,7 @@ using System.Text;
 
 namespace TermGlass.Input;
 
-public sealed class InputReader
+internal sealed class InputReader
 {
     private readonly Thread _thread;
     private volatile bool _running = true;

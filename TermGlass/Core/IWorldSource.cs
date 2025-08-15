@@ -2,12 +2,18 @@ using TermGlass.Rendering.Buffer;
 
 namespace TermGlass.Core;
 
-// Świat: użytkownik dostarcza dane do samplowania (znak+kolor)
+// World: the user provides data for sampling (character + color)
 public interface IWorldSource
 {
-    int Width { get; }
-    int Height { get; }
-    // Zwraca “komórkę świata” (znak + kolor). Poza mapą: null → tło.
+    int Width
+    {
+        get;
+    }
+    int Height
+    {
+        get;
+    }
+    // Returns a "world cell" (character + color). Outside the map: null → background.
     Cell? GetCell(int x, int y);
 
 }

@@ -1,8 +1,9 @@
 namespace TermGlass.Core;
 
+
 // =================== Viewport & math ===================
 
-public sealed class Viewport
+public sealed class Viewport : IViewport
 {
     // Świat → Ekran: sx = 4 + (wx - OriginX) * Zoom
     // sy = 1 + (wy - OriginY) * Zoom
@@ -30,20 +31,20 @@ public sealed class Viewport
         else
         {
 
-/* Unmerged change from project 'TermGlass (net9.0)'
-Before:
-            double block = 1.0 / Zoom; // ile komórek świata przypada na 1 znak terminala
-                                       // lewy-górny “róg” reprezentowanego bloku wokół środka piksela
-            int ix = (int)Math.Floor(wx - block * 0.5);
-            int iy = (int)Math.Floor(wy - block * 0.5);
-            return (ix, iy);
-After:
-            var block = 1.0 / Zoom; // ile komórek świata przypada na 1 znak terminala
-                                       // lewy-górny “róg” reprezentowanego bloku wokół środka piksela
-            var ix = (int)Math.Floor(wx - block * 0.5);
-            var iy = (int)Math.Floor(wy - block * 0.5);
-            return (ix, iy);
-*/
+            /* Unmerged change from project 'TermGlass (net9.0)'
+            Before:
+                        double block = 1.0 / Zoom; // ile komórek świata przypada na 1 znak terminala
+                                                   // lewy-górny “róg” reprezentowanego bloku wokół środka piksela
+                        int ix = (int)Math.Floor(wx - block * 0.5);
+                        int iy = (int)Math.Floor(wy - block * 0.5);
+                        return (ix, iy);
+            After:
+                        var block = 1.0 / Zoom; // ile komórek świata przypada na 1 znak terminala
+                                                   // lewy-górny “róg” reprezentowanego bloku wokół środka piksela
+                        var ix = (int)Math.Floor(wx - block * 0.5);
+                        var iy = (int)Math.Floor(wy - block * 0.5);
+                        return (ix, iy);
+            */
             var block = 1.0 / Zoom; // ile komórek świata przypada na 1 znak terminala
                                     // lewy-górny “róg” reprezentowanego bloku wokół środka piksela
             var ix = (int)Math.Floor(wx - block * 0.5);
@@ -118,5 +119,19 @@ After:
         var x1 = (int)Math.Ceiling(Math.Max(w0x, w1x));
         var y1 = (int)Math.Ceiling(Math.Max(w0y, w1y));
         return (x0, y0, x1, y1);
+    }
+
+    public double OffsetX => OriginX;
+    public double OffsetY => OriginY;
+
+    (int wx, int wy) IViewport.ScreenToWorld(int sx, int sy)
+    {
+        var (wx, wy) = ScreenToWorld(sx, sy);
+        return ((int)wx, (int)wy);
+    }
+    public (int sx, int sy) WorldToScreen(int wx, int wy)
+    {
+        var (sx, sy) = WorldToScreen(wx, wy);
+        return ((int)sx, (int)sy);
     }
 }

@@ -5,7 +5,7 @@ using TermGlass.Rendering.Emit;
 
 namespace TermGlass.Core;
 
-// Rysowanie w koordach świata vs. ekranu
+// Drawing in world vs. screen coordinates
 public sealed class Frame
 {
     private readonly Terminal _t;
@@ -19,11 +19,11 @@ public sealed class Frame
         _t = t; _vp = vp; _buf = buf; Input = input; Cfg = cfg;
     }
 
-    // Transformacje
+    // Transformations
     public (double wx, double wy) ScreenToWorld(int sx, int sy) => _vp.ScreenToWorld(sx, sy);
     public (int sx, int sy) WorldToScreen(double wx, double wy) => _vp.WorldToScreen(wx, wy);
 
-    // Rysowanie mapy świata przez samplowanie okna widoku
+    // Drawing the world map by sampling the viewport window
     public void DrawWorld(IWorldSource world)
     {
         int W = _t.Width, H = _t.Height;
@@ -33,7 +33,7 @@ public sealed class Frame
             {
                 var (wx, wy) = _vp.ScreenToWorld(sx, sy);
 
-                // jeśli świat ma granice – bezpiecznie klampuj / sprawdź
+                // if the world has boundaries – safely clamp / check
                 if (wx < 0 || wy < 0 || wx >= world.Width || wy >= world.Height)
                     continue;
 
@@ -43,7 +43,7 @@ public sealed class Frame
         }
     }
 
-    // (Overlays) — zostawiamy interfejs do rysowania z zewnątrz
+    // (Overlays) — we leave the interface for drawing from the outside
     public void DrawRectWorld(double x, double y, double w, double h, char ch, Rgb fg, Rgb bg)
         => Renderer.DrawRectWorld(_buf, _vp, x, y, w, h, ch, fg, bg, Cfg.Layers.HasFlag(UiLayers.Overlays));
 

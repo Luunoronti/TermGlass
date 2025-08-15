@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using TermGlass.Input;
+﻿using TermGlass.Input;
 using TermGlass.Rendering.Buffer;
 using TermGlass.Rendering.Color;
 
@@ -44,7 +42,7 @@ public sealed class Window
     public int Z { get; set; } = 0;                   // z-index: większe rysują się później (na wierzchu)
 
     /// <summary>Opcjonalny render zawartości; wywoływany po tle/ramce.</summary>
-    public Action<CellBuffer, Window>? Content
+    internal Action<CellBuffer, Window>? Content
     {
         get; set;
     }
