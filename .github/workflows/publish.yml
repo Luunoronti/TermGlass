@@ -1,0 +1,48 @@
+name: publish
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  pack-nuget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore
+        run: dotnet restore TermGlass/TermGlass.csproj
+
+      - name: Build (Release)
+        run: dotnet build TermGlass/TermGlass.csproj -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack TermGlass/TermGlass.csproj -c Release -o ./artifacts --no-build
+
+      - name: Push package to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./artifacts/*.nupkg -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Push symbols to NuGet (snupkg)
+        if: always()
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          shopt -s nullglob
+          files=(./artifacts/*.snupkg)
+          if [ ${#files[@]} -gt 0 ]; then
+            dotnet nuget push ./artifacts/*.snupkg -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
+          else
+            echo "No .snupkg files to push"
+          fi
