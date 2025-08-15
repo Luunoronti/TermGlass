@@ -6,7 +6,7 @@ namespace TermGlass.UI.Windows;
 
 public sealed class Window
 {
-    // ---- własności instancji ----
+    // ---- instance properties ----
     public int X
     {
         get; set;
@@ -30,24 +30,24 @@ public sealed class Window
     public Action<Window>? OnClose
     {
         get; set;
-    }  // callback zamknięcia (opcjonalny)
+    }  // close callback (optional)
 
     public Rgb BgColor { get; set; } = new Rgb(20, 20, 20);
-    public byte BgAlpha { get; set; } = 180;          // 255 = nieprzezroczyste tło
+    public byte BgAlpha { get; set; } = 180;          // 255 = opaque background
     public Rgb BorderColor { get; set; } = new Rgb(255, 255, 255);
-    public byte BorderAlpha { get; set; } = 220;      // 255 = nieprzezroczysta ramka
+    public byte BorderAlpha { get; set; } = 220;      // 255 = opaque border
     public Rgb TextColor { get; set; } = new Rgb(245, 245, 245);
 
     public bool Visible { get; set; } = true;
-    public int Z { get; set; } = 0;                   // z-index: większe rysują się później (na wierzchu)
+    public int Z { get; set; } = 0;                   // z-index: larger values are drawn later (on top)
 
-    /// <summary>Opcjonalny render zawartości; wywoływany po tle/ramce.</summary>
+    /// <summary>Optional content renderer; invoked after background/border.</summary>
     internal Action<CellBuffer, Window>? Content
     {
         get; set;
     }
 
-    // ---- statyczny menedżer ----
+    // ---- static manager ----
     private static readonly List<Window> s_windows = new();
 
     private static Window? s_active;
@@ -55,14 +55,14 @@ public sealed class Window
     private static int s_dragMouseStartX, s_dragMouseStartY;
     private static int s_dragWinStartX, s_dragWinStartY;
     private static bool s_prevMouseLeftDown;
-    private static bool s_clickOnClose; // true, gdy mousedown poszedł w [X]
+    private static bool s_clickOnClose; // true when mousedown occurred on [X]
 
     public static bool IsDragging => s_dragging != null;
     public static IReadOnlyList<Window> All() => s_windows;
 
 
 
-    // Najwyższe (po Z) widoczne okno pod punktem (mx,my)
+    // Topmost (by Z) visible window under point (mx,my)
     private static Window? HitTestTop(int mx, int my)
     {
         Window? best = null;
@@ -78,12 +78,12 @@ public sealed class Window
         return best;
     }
 
-    // obszar przycisku zamknięcia: "[X]" w prawym górnym rogu ramki
+    // close button area: "[X]" at the top-right corner of the frame
     private (int x0, int x1)? CloseButtonSpan()
     {
         if (!ShowCloseButton || W < 5) return null;
-        var x1 = X + W - 2;      // ']' na X+W-2
-        var x0 = X + W - 4;      // '[' na X+W-4, 'X' na X+W-3
+        var x1 = X + W - 2;      // ']' at X+W-2
+        var x0 = X + W - 4;      // '[' at X+W-4, 'X' at X+W-3
         return (x0, x1);
     }
     private bool IsInCloseButton(int mx, int my)
@@ -100,7 +100,7 @@ public sealed class Window
     }
 
 
-    // Podnieś okno na wierzch (zwiększ Z tak, by rysowało się ostatnie)
+    // Bring window to front (increase Z so it draws last)
     private static void BringToFront(Window w)
     {
         var maxZ = 0;
@@ -108,7 +108,7 @@ public sealed class Window
         w.Z = maxZ + 1;
     }
 
-    // Upewnij się, że okno nie ucieka poza ekran
+    // Ensure the window doesn't go off-screen
     private static void ClampToScreen(Window w, int screenW, int screenH)
     {
         if (w.W > screenW) { w.X = 0; w.W = screenW; }
@@ -155,20 +155,20 @@ public sealed class Window
     public static void DrawAll(CellBuffer buf)
     {
         if (s_windows.Count == 0) return;
-        // stabilne sortowanie po Z
+        // stable sort by Z
         s_windows.Sort((a, b) => a.Z.CompareTo(b.Z));
         foreach (var w in s_windows)
             if (w.Visible) w.Draw(buf);
     }
 
-    // ---- rysowanie pojedynczego okna ----
+    // ---- drawing a single window ----
     public void Draw(CellBuffer buf)
     {
         if (W <= 0 || H <= 0) return;
 
         int Wb = buf.Width, Hb = buf.Height;
 
-        // clip prostokąta do bufora
+        // clip rectangle to buffer
         var x0 = Math.Max(0, X);
         var y0 = Math.Max(0, Y);
         var x1 = Math.Min(Wb - 1, X + W - 1);
@@ -179,7 +179,7 @@ public sealed class Window
         // Force opaque if blending is disabled (Console16)
         var opaqueMode = opaque || !buf.AlphaBlendEnabled;
 
-        // 1) TŁO
+        // 1) BACKGROUND
         for (var y = y0; y <= y1; y++)
         {
             for (var x = x0; x <= x1; x++)
@@ -191,64 +191,64 @@ public sealed class Window
             }
         }
 
-        // 2) RAMKA (po krawędziach)
-        // 2) RAMKA — FG = kolor ramki, BG: przy opaque = BgColor, przy transparent = bez zmian
+        // 2) BORDER (edges)
+        //    BORDER — FG = border color, BG: if opaque = BgColor, if transparent = unchanged
         var borderCol = this == s_active ? BorderColorActive : BorderColor;
 
-        // helper: ustaw znak ramki z fg=borderCol, nie ruszaj tła (transparent) lub ustaw tło na BgColor (opaque)
+        // helper: set border glyph with fg=borderCol; keep background (transparent) or set BG to BgColor (opaque)
         void PutBorderFg(int x, int y, char ch)
         {
             if ((uint)x >= (uint)Wb || (uint)y >= (uint)Hb) return;
 
             if (opaqueMode)
             {
-                // tło już jest BgColor po kroku 1, ale ustawiamy jawnie dla spójności
+                // background has been set to BgColor in step 1, but set explicitly for consistency
                 buf.TrySet(x, y, new Cell(ch, borderCol, BgColor));
             }
             else
             {
-                // NIE mieszamy tła kolorem ramki — zostawiamy tło z kroku 1 (zblendowane BgColor)
+                // do NOT blend background with border color — keep background from step 1 (blended BgColor)
                 var cur = buf[x, y];
                 buf.TrySet(x, y, new Cell(ch, borderCol, cur.Bg));
             }
         }
 
-        // znaki ramki (pojedyncza linia)
+        // border characters (single line)
         char tl = '┌', tr = '┐', bl = '└', br = '┘', hz = '─', vt = '│';
 
-        // rogi
+        // corners
         PutBorderFg(x0, y0, tl);
         PutBorderFg(x1, y0, tr);
         PutBorderFg(x0, y1, bl);
         PutBorderFg(x1, y1, br);
 
-        // krawędzie poziome
+        // horizontal edges
         for (var x = x0 + 1; x < x1; x++)
         {
             PutBorderFg(x, y0, hz);
             PutBorderFg(x, y1, hz);
         }
-        // krawędzie pionowe
+        // vertical edges
         for (var y = y0 + 1; y < y1; y++)
         {
             PutBorderFg(x0, y, vt);
             PutBorderFg(x1, y, vt);
         }
 
-        // [X] w prawym górnym rogu (jeśli włączony i jest miejsce)
+        // [X] in the top-right corner (if enabled and there is room)
         var span = CloseButtonSpan();
         if (span != null)
         {
             var cx0 = span.Value.x0; // '['
             var cx1 = span.Value.x1; // ']'
-                                     // "[X]" — fg = kolor ramki, tło jak wyżej (opaque=BgColor, transparent=bez zmian)
+            // "[X]" — fg = border color, background as above (opaque = BgColor, transparent = unchanged)
             PutBorderFg(cx0, Y, '[');
             PutBorderFg(cx0 + 1, Y, 'X');
             PutBorderFg(cx1, Y, ']');
         }
 
 
-        // 3) ZAWARTOŚĆ (opcjonalnie)
+        // 3) CONTENT (optional)
         Content?.Invoke(buf, this);
     }
 
@@ -261,7 +261,7 @@ public sealed class Window
         var mx = input.MouseX;
         var my = input.MouseY;
 
-        // Złap aktywne okno na klik gdziekolwiek w jego obszarze
+        // Pick active window when clicking anywhere in its area
         if (down && !s_prevMouseLeftDown && s_dragging == null)
         {
             var hit = HitTestTop(mx, my);
@@ -269,28 +269,28 @@ public sealed class Window
             {
                 if (s_active != hit) { s_active = hit; BringToFront(hit); changed = true; }
 
-                // klik na [X] – zaznacz intencję zamknięcia
+                // click on [X] – mark close intent
                 if (hit.IsInCloseButton(mx, my))
                 {
                     s_clickOnClose = true;
-                    // nie zaczynamy drag
+                    // do not start drag
                 }
-                // drag tylko jeśli tytuł i nie klikamy w [X]
+                // drag only if title bar and not clicking [X]
                 else if (hit.IsInTitleBar(mx, my))
                 {
                     s_dragging = hit;
                     s_dragMouseStartX = mx; s_dragMouseStartY = my;
                     s_dragWinStartX = hit.X; s_dragWinStartY = hit.Y;
-                    changed = true; // podniesienie / focus
+                    changed = true; // raise / focus
                 }
             }
             else
             {
-                // klik w tło — brak aktywnego
+                // click on background — no active window
                 if (s_active != null) { s_active = null; changed = true; }
             }
         }
-        // PRZESUWANIE
+        // DRAGGING
         else if (down && s_dragging != null)
         {
             var dx = mx - s_dragMouseStartX;
@@ -306,10 +306,10 @@ public sealed class Window
                 changed = true;
             }
         }
-        // ZWOLNIENIE
+        // RELEASE
         else if (!down && s_prevMouseLeftDown)
         {
-            // jeśli był klik na [X] i puszczono nad [X] tego samego okna → zamknij
+            // if click started on [X] and released over [X] of the same window → close
             if (s_clickOnClose)
             {
                 s_clickOnClose = false;
@@ -318,14 +318,14 @@ public sealed class Window
                 {
                     // callback
                     hit.OnClose?.Invoke(hit);
-                    // usunięcie z managera
+                    // remove from manager
                     Remove(hit);
                     if (s_active == hit) s_active = null;
                     changed = true;
                 }
             }
 
-            // koniec drag
+            // end drag
             if (s_dragging != null)
             {
                 s_dragging = null;

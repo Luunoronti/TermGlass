@@ -57,7 +57,7 @@ public static class Renderer
                     count++;
                 }
 
-            // znak: najczęstszy (mode)
+            // character: most frequent (mode)
             var mode = ModeChar(new[] { acc[0].ch, acc[1].ch, acc[2].ch, acc[3].ch });
             var (R, G, B) = (acc[0].r + acc[1].r + acc[2].r + acc[3].r,
                              acc[0].g + acc[1].g + acc[2].g + acc[3].g,
@@ -167,17 +167,17 @@ public static class Renderer
             {
                 if (opaqueMode)
                 {
-                    // pełne nadpisanie — czyścimy znak, ustawiamy tło
+                    // full overwrite — clear character, set background
                     buf.TrySet(x0 + x, y, new Cell(' ', fg, bg));
                 }
                 else
                 {
-                    // półprzezroczysty blend tła
+                    // semi-transparent background blend
                     buf.BlendBgAndFg(x0 + x, y, bg, bgAlpha, bg, bgAlpha);
                 }
             }
 
-            // ramka (tylko blend lub pełne nadpisanie, w zależności od trybu)
+            // border (only blend or full overwrite, depending on mode)
             if (opaqueMode)
             {
                 buf.TrySet(x0, y, new Cell(' ', fg, bd));
@@ -189,13 +189,13 @@ public static class Renderer
                 buf.BlendBg(x0 + w - 1, y, bd, borderAlpha);
             }
 
-            // tekst (bez ruszania tła w trybie blend)
+            // text (without touching background in blend mode)
             var line = lines[row] ?? string.Empty;
             var inner = Math.Max(0, w - padX * 2);
             if (inner > 0 && line.Length > inner) line = line.AsSpan(0, inner).ToString();
 
             if (opaqueMode)
-                PutText(buf, x0 + padX, y, line, fg, bg); // nadpisanie z tłem
+                PutText(buf, x0 + padX, y, line, fg, bg); // overwrite with background
             else
                 PutTextKeepBg(buf, x0 + padX, y, line, fg);
         }
@@ -205,7 +205,7 @@ public static class Renderer
     private static List<string> SplitLines(string s)
     {
         if (string.IsNullOrEmpty(s)) return new List<string>();
-        // wspieramy \r\n, \n, \r
+        // \r\n, \n, \r support
         return new List<string>(s.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
     }
 

@@ -68,9 +68,9 @@ public sealed class Terminal : IDisposable
 
     public void SetColorMode(ColorMode mode)
     {
-        // zmień tryb rysowania
+        // change drawing mode
         _mode = mode;
-        // zresetuj atrybuty, żeby nie zostały stare kolory
+        // reset attributes so old colors don't remain
         Console.Write("\x1b[0m");
     }
 
@@ -86,7 +86,7 @@ public sealed class Terminal : IDisposable
         return false;
     }
 
-    // Tylko klawisze (mysz idzie przez MouseReader na stdin)
+    // Only keys (mouse goes through MouseReader on stdin)
     public bool TryReadKey(InputState input)
     {
         if (!Console.KeyAvailable) return false;
@@ -106,7 +106,7 @@ public sealed class Terminal : IDisposable
 
         if (_mode == ColorMode.TrueColor)
         {
-            // Stan wyjściowy: brak ustawionych kolorów → pierwsza komórka wymusi oba kody
+            // Initial state: no colors set → first cell will force both codes
             var curFg = new Rgb(0, 0, 0);
             var curBg = new Rgb(0, 0, 0);
             var colorInited = false;
@@ -137,7 +137,7 @@ public sealed class Terminal : IDisposable
         }
         else // ColorMode.Console16
         {
-            int curFg = -1, curBg = -1; // „brak koloru”
+            int curFg = -1, curBg = -1; // "no collour"
             for (var y = 0; y < buf.Height; y++)
             {
                 for (var x = 0; x < buf.Width; x++)
@@ -154,7 +154,7 @@ public sealed class Terminal : IDisposable
             }
         }
 
-        // Reset na końcu, żeby nie zostawiać terminala w customowych kolorach
+        // Reset at the end to avoid leaving terminal in custom colors
         _sb.Append("\x1b[0m");
         Console.Write(_sb);
     }
@@ -181,19 +181,19 @@ public sealed class Terminal : IDisposable
 
         try
         {
-            // OUT: włącz VT
+            // OUT: enable VT
             var outH = GetStdHandle(-11); // STD_OUTPUT_HANDLE
             if (!GetConsoleMode(outH, out var outMode)) return false;
             outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
             SetConsoleMode(outH, outMode);
 
-            // IN: przełącz na tryb VT + "raw-ish"
+            // IN: switch to VT mode + "raw-ish"
             var inH = GetStdHandle(-10); // STD_INPUT_HANDLE
             if (!GetConsoleMode(inH, out var inMode)) return false;
 
-            // Żeby wyłączyć QUICK_EDIT, trzeba mieć EXTENDED_FLAGS ustawione.
+            // To disable QUICK_EDIT, EXTENDED_FLAGS must be set.
             inMode |= ENABLE_EXTENDED_FLAGS;
-            // Usuń gotowanie linii/echo/przetwarzanie, dodaj VT input.
+            // Remove line cooking/echo/processing, add VT input.
             inMode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE);
             inMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
 

@@ -4,7 +4,7 @@ using TermGlass.Rendering.Color;
 
 namespace TermGlass.DemoWorld;
 
-// =================== DemoWorld (przykładowe źródło świata) ===================
+// =================== DemoWorld (example world source) ===================
 
 public sealed class DemoWorld : IWorldSource
 {

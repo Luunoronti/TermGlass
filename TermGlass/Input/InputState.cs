@@ -6,7 +6,7 @@ namespace TermGlass.Input;
 
 public sealed class InputState
 {
-    // klawisze
+    // keys
     public ConsoleKey LastKey
     {
         get; set;
@@ -27,13 +27,13 @@ public sealed class InputState
     {
         get; set;
     }
-    public volatile bool Dirty; // sygnał: coś się zmieniło → klatka do narysowania
+    public volatile bool Dirty; // signal: something changed → frame to draw
 
-    // mysz (SGR)
+    // mouse (SGR)
     private readonly object _lock = new();
     public int MouseX { get; private set; } = 10; // 0-based
     public int MouseY { get; private set; } = 5;
-    private int _wheel; // akumulator (ujemny/ dodatni)
+    private int _wheel; // accumulator (negative/positive)
     public bool MouseLeftDown
     {
         get; private set;
@@ -48,7 +48,7 @@ public sealed class InputState
     private int _dragLastX, _dragLastY;
     private bool _dragLeft, _dragRight;
 
-    // pętla krokowa
+    // step loop
     public bool StepRequested
     {
         get; set;
@@ -76,7 +76,7 @@ public sealed class InputState
     }
 
 
-    // wywoływane przez MouseReader (wątek)
+    // called by MouseReader (thread)
     public void UpdateMouse(int x1Based, int y1Based, int btnCode, bool press, bool motion, bool wheel, bool ctrl, bool shift, bool alt)
     {
         lock (_lock)
@@ -84,19 +84,19 @@ public sealed class InputState
             var x = Math.Max(0, x1Based - 1);
             var y = Math.Max(0, y1Based - 1);
 
-            // Zawsze aktualizuj pozycję i brudź klatkę
+            // Always update position and dirty the frame
             MouseX = x;
             MouseY = y;
             Dirty = true;
 
-            if (wheel) return; // kółko obsługujemy osobno (AddWheel)
+            if (wheel) return; // wheel handled separately (AddWheel)
 
             var baseBtn = btnCode & 0b11; // 0=L, 1=M, 2=R
 
             if (motion)
             {
-                // Ruch: NIE zmieniaj stanów przycisków ani baseline drag.
-                // Delta zostanie policzona względem _dragLastX/_dragLastY w ConsumeDragDelta().
+                // Motion: DON'T change button states or drag baseline.
+                // Delta will be calculated relative to _dragLastX/_dragLastY in ConsumeDragDelta().
                 return;
             }
 

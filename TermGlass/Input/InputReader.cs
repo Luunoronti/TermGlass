@@ -37,14 +37,14 @@ internal sealed class InputReader
         {
             if (_resetRequested)
             {
-                // wyczyść potencjalnie "uciętą" sekwencję po resize
+                // clear potentially "truncated" sequence after resize
                 inEsc = false;
                 esc.Clear();
                 _resetRequested = false;
             }
 
             int n;
-            try { n = stdin.Read(buf, 0, buf.Length); } // blokująco, brak timeoutów
+            try { n = stdin.Read(buf, 0, buf.Length); } // blocking, no timeouts
             catch { continue; }
             if (n <= 0) continue;
 
@@ -56,7 +56,7 @@ internal sealed class InputReader
                 {
                     if (c == '\x1b') { inEsc = true; esc.Clear(); esc.Append(c); continue; }
 
-                    // ASCII klawisze (Ctrl+Q już masz):
+                    // ASCII keys (Ctrl+Q already handled):
                     switch (c)
                     {
                         case '\x11': _input.EnqueueKey(ConsoleKey.Q, ctrl: true); break; // Ctrl+Q
@@ -83,7 +83,7 @@ internal sealed class InputReader
                 {
                     esc.Append(c);
 
-                    // --- MYSZ SGR 1006: ESC [ < b ; x ; y (M|m) ---
+                    // --- MOUSE SGR 1006: ESC [ < b ; x ; y (M|m) ---
                     if (IsMouseSeqComplete(esc, out var press))
                     {
                         ParseMouseSGR(esc.ToString(), press); // NIE enqueue’ujemy kluczy dla wheel/motion
@@ -91,7 +91,7 @@ internal sealed class InputReader
                         continue;
                     }
 
-                    // --- STRZAŁKI: ESC [ A/B/C/D ---
+                    // --- ARROWS: ESC [ A/B/C/D ---
                     if (esc.Length >= 3 && esc[0] == '\x1b' && esc[1] == '[')
                     {
                         var last = esc[^1];
@@ -108,7 +108,7 @@ internal sealed class InputReader
                         }
                     }
 
-                    // F1..F12 (SS3 lub CSI-tilde)
+                    // F1..F12 (SS3 or CSI-tilde)
                     if (TryParseFn(esc.ToString(), out var fkey, out var sh, out var al, out var ct))
                     {
                         _input.EnqueueKey(fkey, ctrl: ct, shift: sh, alt: al);
@@ -142,10 +142,10 @@ internal sealed class InputReader
             var meta = (b & 8) != 0;
             var ctrl = (b & 16) != 0;
 
-            // Aktualizujemy STAN (koaleskowanie ruchów) — bez kolejki klawiszy
+            // Update STATE (motion coalescing) — without key queue
             _input.UpdateMouse(x, y, b, press, motion, wheel, ctrl, shift, meta);
 
-            // Wheel → skumuluj delta zamiast generować klawisze
+            // Wheel → accumulate delta instead of generating keys
             if (wheel)
             {
                 var low = b & 0xFF; // 64=up, 65=down
@@ -169,7 +169,7 @@ internal sealed class InputReader
     {
         key = default; shift = alt = ctrl = false;
 
-        // --- Wariant 1: SS3 bez modyfikatorów: ESC O P/Q/R/S => F1..F4 ---
+        // --- Variant 1: SS3 without modifiers: ESC O P/Q/R/S => F1..F4 ---
         if (seq.Length >= 3 && seq[0] == '\x1b' && seq[1] == 'O')
         {
             key = seq[^1] switch
@@ -183,12 +183,12 @@ internal sealed class InputReader
             return key != default;
         }
 
-        // --- Wariant 2a: CSI „tilde”: ESC [ <num> (;<mod>)? ~ => F1..F12 + mody ---
+        // --- Variant 2a: CSI „tilde”: ESC [ <num> (;<mod>)? ~ => F1..F12 + mods ---
         var lb = seq.IndexOf('[');
         var til = seq.IndexOf('~');
         if (lb >= 0 && til > lb)
         {
-            var payload = seq.Substring(lb + 1, til - (lb + 1)); // "11" albo "11;5" itd.
+            var payload = seq.Substring(lb + 1, til - (lb + 1)); // "11" or "11;5" etc.
             var sem = payload.IndexOf(';');
             var numStr = sem >= 0 ? payload.Substring(0, sem) : payload;
             var modStr = sem >= 0 ? payload.Substring(sem + 1) : null;
@@ -222,16 +222,16 @@ internal sealed class InputReader
             return true;
         }
 
-        // --- Wariant 2b: CSI dla F1..F4 w formie litery: ESC [ 1 ; <mod> P/Q/R/S ---
-        // przykłady: ESC [ 1 ; 2 P  (F1+Shift), ESC [ 1 ; 5 Q (F2+Ctrl)
+        // --- Variant 2b: CSI for F1..F4 in letter form: ESC [ 1 ; <mod> P/Q/R/S ---
+        // examples: ESC [ 1 ; 2 P  (F1+Shift), ESC [ 1 ; 5 Q (F2+Ctrl)
         var lb2 = seq.IndexOf('[');
         if (lb2 >= 0 && seq.Length >= lb2 + 4) // min: "[1;2P"
         {
-            // Wyciągnij "1;<mod>" i ostatnią literę
+            // Extract "1;<mod>" and the last letter
             var last = seq[^1];
             if (last is 'P' or 'Q' or 'R' or 'S')
             {
-                var between = seq.Substring(lb2 + 1, seq.Length - (lb2 + 2)); // np. "1;5P" -> "1;5"
+                var between = seq.Substring(lb2 + 1, seq.Length - (lb2 + 2)); // e.g. "1;5P" -> "1;5"
                 var sem2 = between.IndexOf(';');
                 if (sem2 > 0)
                 {
