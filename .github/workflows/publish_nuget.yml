@@ -20,29 +20,29 @@ jobs:
             8.0.x
             9.0.x
 
+      - name: Extract version from tag
+        id: v
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Restore
         run: dotnet restore TermGlass/TermGlass.csproj
 
       - name: Build (Release)
-        run: dotnet build TermGlass/TermGlass.csproj -c Release --no-restore
+        run: dotnet build TermGlass/TermGlass.csproj -c Release --no-restore /p:ContinuousIntegrationBuild=true /p:Version=${{ steps.v.outputs.version }}
 
       - name: Pack
-        run: dotnet pack TermGlass/TermGlass.csproj -c Release -o ./artifacts --no-build
+        run: dotnet pack TermGlass/TermGlass.csproj -c Release -o ./artifacts --no-build /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:Version=${{ steps.v.outputs.version }}
 
-      - name: Push package to NuGet
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: dotnet nuget push ./artifacts/*.nupkg -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
-
-      - name: Push symbols to NuGet (snupkg)
-        if: always()
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      - name: Sanity-check artifacts (optional but handy)
         run: |
-          shopt -s nullglob
-          files=(./artifacts/*.snupkg)
-          if [ ${#files[@]} -gt 0 ]; then
-            dotnet nuget push ./artifacts/*.snupkg -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
-          else
-            echo "No .snupkg files to push"
-          fi
+          ls -l ./artifacts
+          for f in ./artifacts/*.nupkg ./artifacts/*.snupkg; do
+            echo "---- $f ----"
+            unzip -l "$f" | sed -n '1,50p'
+          done
+
+      - name: Push both packages (nupkg + snupkg)
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "./artifacts/*.{nupkg,snupkg}" -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
