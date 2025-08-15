@@ -1,4 +1,8 @@
-namespace Visualization;
+using TermGlass.Core;
+using TermGlass.Rendering.Buffer;
+using TermGlass.Rendering.Color;
+
+namespace TermGlass.Rendering.Emit;
 
 // =================== Rendering helpers ===================
 
@@ -8,9 +12,9 @@ public static class Renderer
     {
         if (!enabled) return;
         int W = buf.Width, H = buf.Height;
-        for (int sy = 1; sy < H - 1; sy++)
+        for (var sy = 1; sy < H - 1; sy++)
         {
-            for (int sx = 4; sx < W; sx++)
+            for (var sx = 4; sx < W; sx++)
             {
                 var (wx, wy) = vp.ScreenToWorld(sx, sy);
                 var cell = Sample(world, wx, wy, 1.0 / vp.Zoom);
@@ -23,22 +27,22 @@ public static class Renderer
     {
         if (worldPerPixel <= 1.0)
         {
-            int x = (int)Math.Round(wx);
-            int y = (int)Math.Round(wy);
+            var x = (int)Math.Round(wx);
+            var y = (int)Math.Round(wy);
             var c = world.GetCell(x, y);
             return c ?? new Cell(' ', Rgb.White, Rgb.Black);
         }
         else
         {
-            double step = Math.Max(1.0, worldPerPixel * 0.8);
-            int x0 = (int)Math.Floor(wx - step * 0.5);
-            int y0 = (int)Math.Floor(wy - step * 0.5);
+            var step = Math.Max(1.0, worldPerPixel * 0.8);
+            var x0 = (int)Math.Floor(wx - step * 0.5);
+            var y0 = (int)Math.Floor(wy - step * 0.5);
 
             var acc = new (int r, int g, int b, char ch, int n)[4];
-            int count = 0;
+            var count = 0;
 
-            for (int dy = 0; dy < 2; dy++)
-                for (int dx = 0; dx < 2; dx++)
+            for (var dy = 0; dy < 2; dy++)
+                for (var dx = 0; dx < 2; dx++)
                 {
                     var c = world.GetCell(x0 + dx, y0 + dy);
                     if (c.HasValue)
@@ -54,7 +58,7 @@ public static class Renderer
                 }
 
             // znak: najczęstszy (mode)
-            char mode = ModeChar(new[] { acc[0].ch, acc[1].ch, acc[2].ch, acc[3].ch });
+            var mode = ModeChar(new[] { acc[0].ch, acc[1].ch, acc[2].ch, acc[3].ch });
             var (R, G, B) = (acc[0].r + acc[1].r + acc[2].r + acc[3].r,
                              acc[0].g + acc[1].g + acc[2].g + acc[3].g,
                              acc[0].b + acc[1].b + acc[2].b + acc[3].b);
@@ -67,7 +71,7 @@ public static class Renderer
     {
         var dict = new Dictionary<char, int>();
         foreach (var c in arr) dict[c] = dict.TryGetValue(c, out var n) ? n + 1 : 1;
-        int best = -1; char bestC = ' ';
+        var best = -1; var bestC = ' ';
         foreach (var kv in dict) if (kv.Value > best) { best = kv.Value; bestC = kv.Key; }
         return bestC;
     }
@@ -79,8 +83,8 @@ public static class Renderer
         var (sx1, sy1) = vp.WorldToScreen(x + w, y + h);
         int x0 = Math.Min(sx0, sx1), x1 = Math.Max(sx0, sx1);
         int y0 = Math.Min(sy0, sy1), y1 = Math.Max(sy0, sy1);
-        for (int sy = y0; sy <= y1; sy++)
-            for (int sx = x0; sx <= x1; sx++)
+        for (var sy = y0; sy <= y1; sy++)
+            for (var sx = x0; sx <= x1; sx++)
                 buf.TrySet(sx, sy, new Cell(ch, fg, bg));
     }
 
@@ -88,12 +92,12 @@ public static class Renderer
     {
         if (!enabled) return;
         var (scx, scy) = vp.WorldToScreen(cx, cy);
-        int rr = (int)Math.Round(r * vp.Zoom);
-        for (int sy = scy - rr; sy <= scy + rr; sy++)
-            for (int sx = scx - rr; sx <= scx + rr; sx++)
+        var rr = (int)Math.Round(r * vp.Zoom);
+        for (var sy = scy - rr; sy <= scy + rr; sy++)
+            for (var sx = scx - rr; sx <= scx + rr; sx++)
             {
                 var (wx, wy) = vp.ScreenToWorld(sx, sy);
-                double d2 = (wx - cx) * (wx - cx) + (wy - cy) * (wy - cy);
+                var d2 = (wx - cx) * (wx - cx) + (wy - cy) * (wy - cy);
                 if (Math.Abs(Math.Sqrt(d2) - r) <= 0.6 / vp.Zoom)
                     buf.TrySet(sx, sy, new Cell(ch, fg, bg));
             }
@@ -107,15 +111,15 @@ public static class Renderer
 
     internal static void PutText(CellBuffer buf, int sx, int sy, string text, Rgb fg, Rgb bg)
     {
-        for (int i = 0; i < text.Length; i++)
+        for (var i = 0; i < text.Length; i++)
             buf.TrySet(sx + i, sy, new Cell(text[i], fg, bg));
     }
 
     public static void PutTextKeepBg(CellBuffer buf, int sx, int sy, string text, Rgb fg)
     {
-        for (int i = 0; i < text.Length; i++)
+        for (var i = 0; i < text.Length; i++)
         {
-            int x = sx + i;
+            var x = sx + i;
             if ((uint)x >= (uint)buf.Width || (uint)sy >= (uint)buf.Height) break;
             var cur = buf[x, sy];
             buf.TrySet(x, sy, new Cell(text[i], fg, cur.Bg));
@@ -135,31 +139,31 @@ public static class Renderer
         if (lines == null || lines.Count == 0) return;
 
         const int padX = 1;
-        int maxLineLen = 0;
-        for (int i = 0; i < lines.Count; i++)
+        var maxLineLen = 0;
+        for (var i = 0; i < lines.Count; i++)
             if (lines[i] != null)
                 maxLineLen = Math.Max(maxLineLen, lines[i].Length);
 
-        int w = Math.Clamp(maxLineLen + padX * 2, 6, W);
+        var w = Math.Clamp(maxLineLen + padX * 2, 6, W);
 
         if (x0 + w >= W) x0 = Math.Max(0, W - w - 1);
-        int h = Math.Min(lines.Count, Math.Max(1, H - 1 - y0));
+        var h = Math.Min(lines.Count, Math.Max(1, H - 1 - y0));
         if (h < lines.Count) h = lines.Count;
-        if (y0 + h >= H - 1) y0 = Math.Max(0, (H - 1) - h);
+        if (y0 + h >= H - 1) y0 = Math.Max(0, H - 1 - h);
 
         var bg = new Rgb(20, 20, 20);
         var bd = new Rgb(255, 255, 255);
         var fg = new Rgb(245, 245, 245);
 
-        bool opaque = (bgAlpha == 255 && borderAlpha == 255);
-        bool opaqueMode = opaque || !buf.AlphaBlendEnabled;
+        var opaque = bgAlpha == 255 && borderAlpha == 255;
+        var opaqueMode = opaque || !buf.AlphaBlendEnabled;
 
-        for (int row = 0; row < lines.Count; row++)
+        for (var row = 0; row < lines.Count; row++)
         {
-            int y = y0 + row;
+            var y = y0 + row;
             if ((uint)y >= (uint)H) break;
 
-            for (int x = 0; x < w; x++)
+            for (var x = 0; x < w; x++)
             {
                 if (opaqueMode)
                 {
@@ -186,8 +190,8 @@ public static class Renderer
             }
 
             // tekst (bez ruszania tła w trybie blend)
-            string line = lines[row] ?? string.Empty;
-            int inner = Math.Max(0, w - padX * 2);
+            var line = lines[row] ?? string.Empty;
+            var inner = Math.Max(0, w - padX * 2);
             if (inner > 0 && line.Length > inner) line = line.AsSpan(0, inner).ToString();
 
             if (opaqueMode)
@@ -207,6 +211,6 @@ public static class Renderer
 
 
     private static string Truncate(string s, int len)
-        => (len <= 0 || s.Length <= len) ? s : s.AsSpan(0, len).ToString();
+        => len <= 0 || s.Length <= len ? s : s.AsSpan(0, len).ToString();
 
 }

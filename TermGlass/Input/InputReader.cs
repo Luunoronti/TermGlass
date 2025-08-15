@@ -1,8 +1,7 @@
 // InputReader.cs
 using System.Text;
-using Visualization;
 
-namespace Visualization;
+namespace TermGlass.Input;
 
 public sealed class InputReader
 {
@@ -21,7 +20,10 @@ public sealed class InputReader
     }
 
     public void Start() => _thread.Start();
-    public void Stop() { _running = false; try { _thread.Join(150); } catch { } }
+    public void Stop()
+    {
+        _running = false; try { _thread.Join(150); } catch { }
+    }
 
     private void ReadLoop()
     {
@@ -29,7 +31,7 @@ public sealed class InputReader
 
         var buf = new byte[4096];
         var esc = new StringBuilder(128);
-        bool inEsc = false;
+        var inEsc = false;
 
         while (_running)
         {
@@ -46,9 +48,9 @@ public sealed class InputReader
             catch { continue; }
             if (n <= 0) continue;
 
-            for (int i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
-                char c = (char)buf[i];
+                var c = (char)buf[i];
 
                 if (!inEsc)
                 {
@@ -82,7 +84,7 @@ public sealed class InputReader
                     esc.Append(c);
 
                     // --- MYSZ SGR 1006: ESC [ < b ; x ; y (M|m) ---
-                    if (IsMouseSeqComplete(esc, out bool press))
+                    if (IsMouseSeqComplete(esc, out var press))
                     {
                         ParseMouseSGR(esc.ToString(), press); // NIE enqueue’ujemy kluczy dla wheel/motion
                         inEsc = false; esc.Clear();
@@ -92,7 +94,7 @@ public sealed class InputReader
                     // --- STRZAŁKI: ESC [ A/B/C/D ---
                     if (esc.Length >= 3 && esc[0] == '\x1b' && esc[1] == '[')
                     {
-                        char last = esc[^1];
+                        var last = esc[^1];
                         if (last == 'A' || last == 'B' || last == 'C' || last == 'D')
                         {
                             switch (last)
@@ -107,7 +109,7 @@ public sealed class InputReader
                     }
 
                     // F1..F12 (SS3 lub CSI-tilde)
-                    if (TryParseFn(esc.ToString(), out var fkey, out bool sh, out bool al, out bool ct))
+                    if (TryParseFn(esc.ToString(), out var fkey, out var sh, out var al, out var ct))
                     {
                         _input.EnqueueKey(fkey, ctrl: ct, shift: sh, alt: al);
                         inEsc = false; esc.Clear();
@@ -124,21 +126,21 @@ public sealed class InputReader
     {
         try
         {
-            int lt = s.IndexOf('<');
-            int end = s.Length - 1;
+            var lt = s.IndexOf('<');
+            var end = s.Length - 1;
             var payload = s.Substring(lt + 1, end - (lt + 1));
             var parts = payload.Split(';');
             if (parts.Length != 3) return;
 
-            int b = int.Parse(parts[0]);
-            int x = int.Parse(parts[1]);
-            int y = int.Parse(parts[2]);
+            var b = int.Parse(parts[0]);
+            var x = int.Parse(parts[1]);
+            var y = int.Parse(parts[2]);
 
-            bool motion = (b & 32) != 0;
-            bool wheel = (b & 64) != 0;
-            bool shift = (b & 4) != 0;
-            bool meta = (b & 8) != 0;
-            bool ctrl = (b & 16) != 0;
+            var motion = (b & 32) != 0;
+            var wheel = (b & 64) != 0;
+            var shift = (b & 4) != 0;
+            var meta = (b & 8) != 0;
+            var ctrl = (b & 16) != 0;
 
             // Aktualizujemy STAN (koaleskowanie ruchów) — bez kolejki klawiszy
             _input.UpdateMouse(x, y, b, press, motion, wheel, ctrl, shift, meta);
@@ -146,7 +148,7 @@ public sealed class InputReader
             // Wheel → skumuluj delta zamiast generować klawisze
             if (wheel)
             {
-                int low = b & 0xFF; // 64=up, 65=down
+                var low = b & 0xFF; // 64=up, 65=down
                 _input.AddWheel(low == 64 ? +1 : -1);
             }
         }
@@ -157,8 +159,8 @@ public sealed class InputReader
         press = false;
         if (esc.Length < 3) return false;
         if (esc[0] != '\x1b' || esc[1] != '[' || esc[2] != '<') return false;
-        char last = esc[^1];
-        if (last == 'M' || last == 'm') { press = (last == 'M'); return true; }
+        var last = esc[^1];
+        if (last == 'M' || last == 'm') { press = last == 'M'; return true; }
         return false;
     }
 
@@ -182,14 +184,14 @@ public sealed class InputReader
         }
 
         // --- Wariant 2a: CSI „tilde”: ESC [ <num> (;<mod>)? ~ => F1..F12 + mody ---
-        int lb = seq.IndexOf('[');
-        int til = seq.IndexOf('~');
+        var lb = seq.IndexOf('[');
+        var til = seq.IndexOf('~');
         if (lb >= 0 && til > lb)
         {
             var payload = seq.Substring(lb + 1, til - (lb + 1)); // "11" albo "11;5" itd.
-            int sem = payload.IndexOf(';');
-            string numStr = sem >= 0 ? payload.Substring(0, sem) : payload;
-            string modStr = sem >= 0 ? payload.Substring(sem + 1) : null;
+            var sem = payload.IndexOf(';');
+            var numStr = sem >= 0 ? payload.Substring(0, sem) : payload;
+            var modStr = sem >= 0 ? payload.Substring(sem + 1) : null;
 
             key = numStr switch
             {
@@ -209,10 +211,10 @@ public sealed class InputReader
             };
             if (key == default) return false;
 
-            if (!string.IsNullOrEmpty(modStr) && int.TryParse(modStr, out int m))
+            if (!string.IsNullOrEmpty(modStr) && int.TryParse(modStr, out var m))
             {
                 // xterm: m = 1 + (Shift?1) + (Alt?2) + (Ctrl?4)
-                int mask = Math.Max(1, m) - 1;
+                var mask = Math.Max(1, m) - 1;
                 shift = (mask & 1) != 0;
                 alt = (mask & 2) != 0;
                 ctrl = (mask & 4) != 0;
@@ -222,20 +224,20 @@ public sealed class InputReader
 
         // --- Wariant 2b: CSI dla F1..F4 w formie litery: ESC [ 1 ; <mod> P/Q/R/S ---
         // przykłady: ESC [ 1 ; 2 P  (F1+Shift), ESC [ 1 ; 5 Q (F2+Ctrl)
-        int lb2 = seq.IndexOf('[');
+        var lb2 = seq.IndexOf('[');
         if (lb2 >= 0 && seq.Length >= lb2 + 4) // min: "[1;2P"
         {
             // Wyciągnij "1;<mod>" i ostatnią literę
-            char last = seq[^1];
+            var last = seq[^1];
             if (last is 'P' or 'Q' or 'R' or 'S')
             {
-                string between = seq.Substring(lb2 + 1, seq.Length - (lb2 + 2)); // np. "1;5P" -> "1;5"
-                int sem2 = between.IndexOf(';');
+                var between = seq.Substring(lb2 + 1, seq.Length - (lb2 + 2)); // np. "1;5P" -> "1;5"
+                var sem2 = between.IndexOf(';');
                 if (sem2 > 0)
                 {
-                    string n = between.Substring(0, sem2);
-                    string mstr = between.Substring(sem2 + 1);
-                    if (n == "1" && int.TryParse(mstr, out int m))
+                    var n = between.Substring(0, sem2);
+                    var mstr = between.Substring(sem2 + 1);
+                    if (n == "1" && int.TryParse(mstr, out var m))
                     {
                         key = last switch
                         {
@@ -246,7 +248,7 @@ public sealed class InputReader
                             _ => default
                         };
                         if (key == default) return false;
-                        int mask = Math.Max(1, m) - 1;
+                        var mask = Math.Max(1, m) - 1;
                         shift = (mask & 1) != 0;
                         alt = (mask & 2) != 0;
                         ctrl = (mask & 4) != 0;

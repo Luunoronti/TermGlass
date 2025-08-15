@@ -1,4 +1,7 @@
-namespace Visualization;
+using TermGlass.Modes;
+using TermGlass.Rendering.Color;
+
+namespace TermGlass.Core;
 
 public record VizConfig
 {

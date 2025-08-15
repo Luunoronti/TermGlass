@@ -1,4 +1,8 @@
-namespace Visualization;
+using TermGlass.Core;
+using TermGlass.Rendering.Buffer;
+using TermGlass.Rendering.Color;
+
+namespace TermGlass.DemoWorld;
 
 // =================== DemoWorld (przykładowe źródło świata) ===================
 
@@ -6,8 +10,14 @@ public sealed class DemoWorld : IWorldSource
 {
 
 
-    public int Width { get; }
-    public int Height { get; }
+    public int Width
+    {
+        get;
+    }
+    public int Height
+    {
+        get;
+    }
     private readonly Cell[,] _cells;
 
     public DemoWorld(int width, int height)
@@ -17,26 +27,26 @@ public sealed class DemoWorld : IWorldSource
 
         var chars = " .:-=+*#%@".AsSpan();
 
-        for (int y = 0; y < height; y++)
+        for (var y = 0; y < height; y++)
         {
             // Hue runs left→right, Value (brightness) runs top→bottom
-            double v = 0.25 + 0.75 * (height <= 1 ? 0.0 : (double)y / (height - 1)); // 0.25..1.0
+            var v = 0.25 + 0.75 * (height <= 1 ? 0.0 : (double)y / (height - 1)); // 0.25..1.0
             const double s = 1.0;
 
-            for (int x = 0; x < width; x++)
+            for (var x = 0; x < width; x++)
             {
-                double h = (width <= 1 ? 0.0 : (double)x / (width - 1)) * 360.0; // 0..360
+                var h = (width <= 1 ? 0.0 : (double)x / (width - 1)) * 360.0; // 0..360
 
                 // Background: full-spectrum gradient
                 var bg = Rgb.FromHsv(h, s, v);
 
                 // Foreground: pick contrasting color (simple luma-based switch)
                 // If background is dark, use bright fg; if bright, use dark fg.
-                int luma = (int)(0.2126 * bg.R + 0.7152 * bg.G + 0.0722 * bg.B);
-                var fg = (luma < 140) ? new Rgb(240, 240, 240) : new Rgb(20, 20, 20);
+                var luma = (int)(0.2126 * bg.R + 0.7152 * bg.G + 0.0722 * bg.B);
+                var fg = luma < 140 ? new Rgb(240, 240, 240) : new Rgb(20, 20, 20);
 
                 // Character pattern (deterministic)
-                char ch = chars[(x + y) % chars.Length];
+                var ch = chars[(x + y) % chars.Length];
 
                 _cells[x, y] = new Cell(ch, fg, bg);
             }

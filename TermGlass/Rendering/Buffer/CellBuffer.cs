@@ -1,11 +1,19 @@
-﻿namespace Visualization;
+﻿using TermGlass.Rendering.Color;
+
+namespace TermGlass.Rendering.Buffer;
 
 // =================== Terminal & buffers ===================
 
 public sealed class CellBuffer
 {
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    public int Width
+    {
+        get; private set;
+    }
+    public int Height
+    {
+        get; private set;
+    }
     private Cell[,] _data;
 
     public bool AlphaBlendEnabled { get; set; } = true;
@@ -26,8 +34,8 @@ public sealed class CellBuffer
 
     public void Fill(Cell c)
     {
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < Width; x++)
+        for (var y = 0; y < Height; y++)
+            for (var x = 0; x < Width; x++)
                 _data[x, y] = c;
     }
 
@@ -39,7 +47,9 @@ public sealed class CellBuffer
     public bool TrySet(int x, int y, Cell c)
     {
         if ((uint)x < (uint)Width && (uint)y < (uint)Height)
-        { _data[x, y] = c; return true; }
+        {
+            _data[x, y] = c; return true;
+        }
         return false;
     }
 
@@ -119,15 +129,15 @@ public sealed class CellBuffer
             var ch = replaceChar && top.Ch != '\0' ? top.Ch : cur.Ch;
             // Use top bg fully; use top fg fully if we replace char, else keep fg
             var bg = top.Bg;
-            var fg = (replaceChar && top.Ch != ' ') ? top.Fg : cur.Fg;
+            var fg = replaceChar && top.Ch != ' ' ? top.Fg : cur.Fg;
             _data[x, y] = new Cell(ch, fg, bg);
             return;
         }
 
         var outBg = Blend(top.Bg, bgAlpha, cur.Bg);
 
-        char newCh = cur.Ch;
-        Rgb outFg = cur.Fg;
+        var newCh = cur.Ch;
+        var outFg = cur.Fg;
         if (replaceChar || top.Ch != ' ')
         {
             newCh = top.Ch == '\0' ? cur.Ch : top.Ch;

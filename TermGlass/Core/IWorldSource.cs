@@ -1,4 +1,6 @@
-namespace Visualization;
+using TermGlass.Rendering.Buffer;
+
+namespace TermGlass.Core;
 
 // Świat: użytkownik dostarcza dane do samplowania (znak+kolor)
 public interface IWorldSource

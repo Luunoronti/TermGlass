@@ -1,29 +1,47 @@
 using System.Collections.Concurrent;
-using Visualization;
 
-namespace Visualization;
+namespace TermGlass.Input;
 
 // =================== Input: stan + parser myszy (SGR 1006) ===================
 
 public sealed class InputState
 {
     // klawisze
-    public ConsoleKey LastKey { get; set; }
-    public bool Ctrl { get; set; }
-    public bool Shift { get; set; }
-    public bool Alt { get; set; }
-    public bool Esc { get; set; }
+    public ConsoleKey LastKey
+    {
+        get; set;
+    }
+    public bool Ctrl
+    {
+        get; set;
+    }
+    public bool Shift
+    {
+        get; set;
+    }
+    public bool Alt
+    {
+        get; set;
+    }
+    public bool Esc
+    {
+        get; set;
+    }
     public volatile bool Dirty; // sygnał: coś się zmieniło → klatka do narysowania
 
     // mysz (SGR)
     private readonly object _lock = new();
     public int MouseX { get; private set; } = 10; // 0-based
     public int MouseY { get; private set; } = 5;
-    private int _prevX, _prevY;
-    private bool _moved;
     private int _wheel; // akumulator (ujemny/ dodatni)
-    public bool MouseLeftDown { get; private set; }
-    public bool MouseRightDown { get; private set; }
+    public bool MouseLeftDown
+    {
+        get; private set;
+    }
+    public bool MouseRightDown
+    {
+        get; private set;
+    }
     public bool MouseLeftDragging => _dragLeft;
     public bool MouseRightDragging => _dragRight;
 
@@ -31,7 +49,10 @@ public sealed class InputState
     private bool _dragLeft, _dragRight;
 
     // pętla krokowa
-    public bool StepRequested { get; set; }
+    public bool StepRequested
+    {
+        get; set;
+    }
 
     public void OnResize()
     {
@@ -60,8 +81,8 @@ public sealed class InputState
     {
         lock (_lock)
         {
-            int x = Math.Max(0, x1Based - 1);
-            int y = Math.Max(0, y1Based - 1);
+            var x = Math.Max(0, x1Based - 1);
+            var y = Math.Max(0, y1Based - 1);
 
             // Zawsze aktualizuj pozycję i brudź klatkę
             MouseX = x;
@@ -70,7 +91,7 @@ public sealed class InputState
 
             if (wheel) return; // kółko obsługujemy osobno (AddWheel)
 
-            int baseBtn = btnCode & 0b11; // 0=L, 1=M, 2=R
+            var baseBtn = btnCode & 0b11; // 0=L, 1=M, 2=R
 
             if (motion)
             {
@@ -92,14 +113,16 @@ public sealed class InputState
             }
         }
     }
-    public void ConsumedMouseMove() { lock (_lock) _moved = false; }
+    public void ConsumedMouseMove()
+    {
+    }
 
     public (int dx, int dy) ConsumeDragDelta()
     {
         lock (_lock)
         {
-            int dx = MouseX - _dragLastX;
-            int dy = MouseY - _dragLastY;
+            var dx = MouseX - _dragLastX;
+            var dy = MouseY - _dragLastY;
             _dragLastX = MouseX;
             _dragLastY = MouseY;
             return (dx, dy);
@@ -110,7 +133,7 @@ public sealed class InputState
     {
         lock (_lock)
         {
-            int v = _wheel; _wheel = 0;
+            var v = _wheel; _wheel = 0;
             return v;
         }
     }

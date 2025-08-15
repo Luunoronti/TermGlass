@@ -1,6 +1,6 @@
 using System;
 
-namespace Visualization;
+namespace TermGlass.Rendering.Color;
 
 // Prosty helper kolorów TrueColor
 public readonly record struct Rgb(byte R, byte G, byte B)
@@ -51,14 +51,14 @@ public readonly record struct Rgb(byte R, byte G, byte B)
         // h∈[0,360), s∈[0,1], v∈[0,1]
         if (s <= 0.0)
         {
-            byte g = (byte)Math.Round(v * 255.0);
+            var g = (byte)Math.Round(v * 255.0);
             return new Rgb(g, g, g);
         }
 
         h = (h % 360.0 + 360.0) % 360.0;
-        double c = v * s;
-        double x = c * (1.0 - Math.Abs((h / 60.0) % 2.0 - 1.0));
-        double m = v - c;
+        var c = v * s;
+        var x = c * (1.0 - Math.Abs(h / 60.0 % 2.0 - 1.0));
+        var m = v - c;
 
         double r1 = 0, g1 = 0, b1 = 0;
         switch ((int)(h / 60.0))
@@ -111,7 +111,7 @@ public readonly record struct Rgb(byte R, byte G, byte B)
     /// <summary>RGB odpowiadający danemu ConsoleColor (dokładne wartości z palety ANSI-16).</summary>
     public static Rgb FromConsoleColor(ConsoleColor color)
     {
-        int idx = (int)color;
+        var idx = (int)color;
         if ((uint)idx >= (uint)Ansi16Palette.Length) idx = 0;
         return Ansi16Palette[idx];
     }

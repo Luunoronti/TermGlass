@@ -9,7 +9,6 @@
     <PackageId>TermGlass</PackageId>
     <Description>Terminal visualization toolkit for C# with true color, layers, rulers, tooltips, windows, zoom/pan, and input. Great for Advent of Code and algorithm sims.</Description>
     <Authors>Luunoronti</Authors>
-    <Company></Company>
     <RepositoryUrl>https://github.com/Luunoronti/TermGlass</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,12 +18,12 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
-  <!-- If you later split renderer and core, keep it one DLL for now. -->
+  <!-- Pull README and LICENSE from the repo root into the package root -->
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="/" />
-    <None Include="LICENSE" Pack="true" PackagePath="/" />
+    <None Include="../README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="../LICENSE" Pack="true" PackagePath="/" Visible="false" />
   </ItemGroup>
 </Project>

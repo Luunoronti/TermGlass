@@ -1,4 +1,4 @@
-namespace Visualization;
+namespace TermGlass.Core;
 
 // =================== Utils ===================
 

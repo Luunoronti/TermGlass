@@ -1,4 +1,9 @@
-namespace Visualization;
+using TermGlass.Input;
+using TermGlass.Rendering.Buffer;
+using TermGlass.Rendering.Color;
+using TermGlass.Rendering.Emit;
+
+namespace TermGlass.Core;
 
 // Rysowanie w koordach świata vs. ekranu
 public sealed class Frame
@@ -22,9 +27,9 @@ public sealed class Frame
     public void DrawWorld(IWorldSource world)
     {
         int W = _t.Width, H = _t.Height;
-        for (int sy = 0; sy < H; sy++)
+        for (var sy = 0; sy < H; sy++)
         {
-            for (int sx = 0; sx < W; sx++)
+            for (var sx = 0; sx < W; sx++)
             {
                 var (wx, wy) = _vp.ScreenToWorld(sx, sy);
 
