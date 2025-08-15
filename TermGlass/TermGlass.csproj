@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- NuGet metadata -->
+    <Title>TermGlass</Title>
+    <PackageId>TermGlass</PackageId>
+    <Description>Terminal visualization toolkit for C# with true color, layers, rulers, tooltips, windows, zoom/pan, and input. Great for Advent of Code and algorithm sims.</Description>
+    <Authors>Luunoronti</Authors>
+    <Company></Company>
+    <RepositoryUrl>https://github.com/Luunoronti/TermGlass</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/Luunoronti/TermGlass</PackageProjectUrl>
+    <PackageTags>terminal;console;visualization;ansi;truecolor;adventofcode;aoc;ascii</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+
+  <!-- If you later split renderer and core, keep it one DLL for now. -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="LICENSE" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
